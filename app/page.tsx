@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 
 const MapComponent = dynamic(() => import("@/components/Map"), { ssr: false });
 
-type SuburbFeature = GeoJSON.Feature<GeoJSON.Geometry, { SAL_NAME_2021: string }>;
+type SuburbFeature = GeoJSON.Feature<GeoJSON.Geometry, { sal_name_2021: string }>;
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -32,7 +32,7 @@ export default function Home() {
       const pool = feats.length > 0 ? feats : features;
       if (pool.length === 0) return;
       const picked = pickRandom(pool);
-      setTargetSuburb(picked.properties.SAL_NAME_2021);
+      setTargetSuburb(picked.properties.sal_name_2021);
       setFlashResult(null);
     },
     [features]

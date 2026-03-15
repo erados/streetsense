@@ -13,12 +13,14 @@ L.Icon.Default.mergeOptions({
 });
 
 const GEOJSON_URL =
-  "https://geo.abs.gov.au/arcgis/rest/services/ASGS2021/SAL/MapServer/0/query?where=STATE_CODE_2021%3D%273%27&outFields=SAL_NAME_2021&f=geojson&returnGeometry=true&outSR=4326";
+  "https://geo.abs.gov.au/arcgis/rest/services/ASGS2021/SAL/MapServer/0/query?where=STATE_CODE_2021%3D%273%27&outFields=sal_name_2021&f=geojson&returnGeometry=true&outSR=4326";
 
-const DARK_TILES = "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png";
-const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+const DARK_TILES =
+  "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png";
+const ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
-type SuburbFeature = GeoJSON.Feature<GeoJSON.Geometry, { SAL_NAME_2021: string }>;
+type SuburbFeature = GeoJSON.Feature<GeoJSON.Geometry, { sal_name_2021: string }>;
 
 interface Props {
   targetSuburb: string | null;
@@ -28,16 +30,39 @@ interface Props {
   flashResult: "correct" | "wrong" | null;
 }
 
-export default function Map({ targetSuburb, onCorrect, onWrong, onFeaturesLoaded, flashResult }: Props) {
+export default function Map({
+  targetSuburb,
+  onCorrect,
+  onWrong,
+  onFeaturesLoaded,
+  flashResult,
+}: Props) {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const geoLayerRef = useRef<L.GeoJSON | null>(null);
   const lastClickedRef = useRef<L.Layer | null>(null);
+  // Use a ref for targetSuburb so click handlers always see current value
+  const targetSuburbRef = useRef<string | null>(targetSuburb);
+  const onCorrectRef = useRef(onCorrect);
+  const onWrongRef = useRef(onWrong);
   const [loading, setLoading] = useState(true);
 
-  // Init map once
+  // Keep refs in sync
   useEffect(() => {
-    if (mapRef.current || !containerRef.current) return;
+    targetSuburbRef.current = targetSuburb;
+  }, [targetSuburb]);
+  useEffect(() => {
+    onCorrectRef.current = onCorrect;
+  }, [onCorrect]);
+  useEffect(() => {
+    onWrongRef.current = onWrong;
+  }, [onWrong]);
+
+  // Init map once (uses refs to avoid stale closure issues)
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const abortController = new AbortController();
 
     const map = L.map(containerRef.current, {
       center: [-27.47, 153.02],
@@ -53,10 +78,12 @@ export default function Map({ targetSuburb, onCorrect, onWrong, onFeaturesLoaded
 
     mapRef.current = map;
 
-    // Fetch GeoJSON
-    fetch(GEOJSON_URL)
+    // Fetch GeoJSON with abort support
+    fetch(GEOJSON_URL, { signal: abortController.signal })
       .then((r) => r.json())
       .then((data: GeoJSON.FeatureCollection) => {
+        if (abortController.signal.aborted) return;
+
         const features = data.features as SuburbFeature[];
         onFeaturesLoaded(features);
 
@@ -67,32 +94,37 @@ export default function Map({ targetSuburb, onCorrect, onWrong, onFeaturesLoaded
             fillColor: "#333",
             fillOpacity: 0.3,
           }),
-          onEachFeature: (feature, layer) => {
-            const name: string = (feature.properties as { SAL_NAME_2021: string }).SAL_NAME_2021;
-            layer.on("click", () => {
-              handleClick(name, layer);
-            });
-            layer.bindTooltip(name, { sticky: true, className: "suburb-tooltip" });
+          onEachFeature: (feature, lyr) => {
+            const name: string = (
+              feature.properties as { sal_name_2021: string }
+            ).sal_name_2021;
+            lyr.on("click", () => handleClick(name, lyr));
+            lyr.bindTooltip(name, { sticky: true, className: "suburb-tooltip" });
           },
-        }).addTo(map);
+        });
 
+        layer.addTo(map);
         geoLayerRef.current = layer;
         setLoading(false);
       })
       .catch((err) => {
+        if (abortController.signal.aborted) return;
         console.error("Failed to load GeoJSON", err);
         setLoading(false);
       });
 
     return () => {
+      abortController.abort();
       map.remove();
       mapRef.current = null;
+      geoLayerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleClick(clickedName: string, layer: L.Layer) {
-    if (!targetSuburb) return;
+    const target = targetSuburbRef.current;
+    if (!target) return;
 
     // Reset previous clicked layer
     if (lastClickedRef.current && geoLayerRef.current) {
@@ -100,7 +132,7 @@ export default function Map({ targetSuburb, onCorrect, onWrong, onFeaturesLoaded
     }
 
     lastClickedRef.current = layer;
-    const isCorrect = clickedName.toLowerCase() === targetSuburb.toLowerCase();
+    const isCorrect = clickedName.toLowerCase() === target.toLowerCase();
 
     (layer as L.Path).setStyle(
       isCorrect
@@ -109,8 +141,7 @@ export default function Map({ targetSuburb, onCorrect, onWrong, onFeaturesLoaded
     );
 
     if (isCorrect) {
-      onCorrect();
-      // Reset after 1.2s
+      onCorrectRef.current();
       setTimeout(() => {
         if (lastClickedRef.current && geoLayerRef.current) {
           geoLayerRef.current.resetStyle(lastClickedRef.current as L.Path);
@@ -118,8 +149,7 @@ export default function Map({ targetSuburb, onCorrect, onWrong, onFeaturesLoaded
         }
       }, 1200);
     } else {
-      onWrong();
-      // Reset wrong after 0.8s
+      onWrongRef.current();
       setTimeout(() => {
         if (lastClickedRef.current && geoLayerRef.current) {
           geoLayerRef.current.resetStyle(lastClickedRef.current as L.Path);
@@ -129,17 +159,13 @@ export default function Map({ targetSuburb, onCorrect, onWrong, onFeaturesLoaded
     }
   }
 
-  // Fly to target suburb when it changes
-  useEffect(() => {
-    if (!targetSuburb || !geoLayerRef.current || !mapRef.current) return;
-    // Don't auto-fly — let the user explore
-  }, [targetSuburb]);
-
   return (
     <div className="relative w-full h-full">
       {loading && (
         <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-black/70">
-          <div className="text-white text-xl font-semibold animate-pulse">지도 불러오는 중...</div>
+          <div className="text-white text-xl font-semibold animate-pulse">
+            지도 불러오는 중...
+          </div>
         </div>
       )}
       <div ref={containerRef} className="w-full h-full" />
