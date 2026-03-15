@@ -83,8 +83,8 @@ export default function StreetsMap({
   useEffect(() => {
     if (!selectedSuburb) return;
 
-    const map = mapRef.current;
-    const layerGroup = layerGroupRef.current;
+    const map = mapRef.current as L.Map;
+    const layerGroup = layerGroupRef.current as L.LayerGroup;
     if (!map || !layerGroup) return;
 
     const abortController = new AbortController();
