@@ -92,6 +92,12 @@ export default function RoadsPage() {
           <span className="px-3 py-1 bg-white/25 text-white text-xs rounded-full border border-white/40">
             🛣️ 도로
           </span>
+          <Link
+            href="/streets"
+            className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs rounded-full border border-white/20 backdrop-blur-sm transition-colors"
+          >
+            🏙️ 거리
+          </Link>
         </div>
 
         {/* Prompt */}

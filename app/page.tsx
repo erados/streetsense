@@ -93,6 +93,12 @@ export default function Home() {
           >
             🛣️ 도로
           </Link>
+          <Link
+            href="/streets"
+            className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white text-xs rounded-full border border-white/20 backdrop-blur-sm transition-colors"
+          >
+            🏙️ 거리
+          </Link>
         </div>
 
         {/* Prompt */}
