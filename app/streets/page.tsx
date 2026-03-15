@@ -8,12 +8,28 @@ import type { Street } from "@/components/StreetsMap";
 const StreetsMap = dynamic(() => import("@/components/StreetsMap"), { ssr: false });
 
 const SUBURBS = [
+  // Inner
   "Brisbane City", "Fortitude Valley", "New Farm", "Newstead", "West End", "South Bank",
-  "Kangaroo Point", "Woolloongabba", "Paddington", "Milton", "Toowong", "Indooroopilly",
-  "Taringa", "St Lucia", "Dutton Park", "Highgate Hill", "Spring Hill", "Kelvin Grove",
-  "Red Hill", "Ashgrove", "Bardon", "Auchenflower", "Teneriffe", "Bowen Hills",
+  "Kangaroo Point", "Woolloongabba", "Paddington", "Milton", "Spring Hill", "Kelvin Grove",
+  "Teneriffe", "Bowen Hills", "Highgate Hill", "Dutton Park", "Auchenflower",
+  // North
   "Windsor", "Gordon Park", "Lutwyche", "Clayfield", "Ascot", "Hamilton",
-];
+  "Nundah", "Wavell Heights", "Chermside", "Stafford", "Everton Park", "Keperra",
+  "Gaythorne", "Enoggera", "Alderley", "Newmarket", "Wilston",
+  // West
+  "Toowong", "Indooroopilly", "Taringa", "St Lucia", "Bardon", "Red Hill",
+  "Ashgrove", "The Gap", "Ferny Grove", "Keperra", "Kenmore",
+  // South
+  "Sunnybank", "Sunnybank Hills", "Runcorn", "Calamvale", "Algester",
+  "Acacia Ridge", "Coopers Plains", "Salisbury", "Moorooka", "Rocklea",
+  "Annerley", "Yeronga", "Tennyson", "Fairfield", "Greenslopes",
+  "Holland Park", "Mount Gravatt", "Upper Mount Gravatt", "Eight Mile Plains",
+  "Wishart", "Mansfield", "Macgregor", "Robertson", "Sunnybank",
+  // East
+  "Coorparoo", "Camp Hill", "Carina", "Carindale", "Tingalpa", "Wynnum",
+  "Manly", "Hemmant", "Murarrie", "Morningside", "Norman Park", "Hawthorne",
+  "Balmoral", "Bulimba", "Cannon Hill",
+].filter((v, i, a) => a.indexOf(v) === i).sort();
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
