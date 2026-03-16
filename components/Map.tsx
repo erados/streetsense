@@ -12,8 +12,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
+// Brisbane metro bbox — 470 suburbs, avoids 2000-record QLD limit (includes Sunnybank etc.)
 const GEOJSON_URL =
-  "https://geo.abs.gov.au/arcgis/rest/services/ASGS2021/SAL/MapServer/0/query?where=STATE_CODE_2021%3D%273%27&outFields=sal_name_2021&f=geojson&returnGeometry=true&outSR=4326";
+  "https://geo.abs.gov.au/arcgis/rest/services/ASGS2021/SAL/MapServer/0/query?where=STATE_CODE_2021%3D%273%27&geometry=152.6,-27.8,153.6,-27.0&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&inSR=4326&outFields=sal_name_2021&f=geojson&returnGeometry=true&outSR=4326";
 
 const DARK_TILES =
   "https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png";
